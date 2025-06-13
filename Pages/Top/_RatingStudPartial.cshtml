@@ -1,0 +1,27 @@
+﻿@model IEnumerable<dynamic>
+
+<div class="rating-table">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Участник</th>
+                <th>Класс</th>
+                <th>Баллы
+                    <img src="~/image/help.png" title="Подсчет баллов ведется исходя из количества призовых мест" style="cursor: pointer;" alt="?">
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.Position</td>
+                    <td>@item.StudentName</td>
+                    <td>@item.ClassName</td>
+                    <td>@item.Points</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

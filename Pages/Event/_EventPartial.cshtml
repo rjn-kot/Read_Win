@@ -1,0 +1,75 @@
+﻿@model IEnumerable<Read_Win.Pages.Event.EventViewModel>
+@using System.Text.Json
+
+<table class="table table-bordered event-table">
+    <tbody>
+        @foreach (var eventItem in Model)
+        {
+            var eventData = new {
+                Title = eventItem.Title,
+                Date = eventItem.GetFormattedDate(),
+                Type = eventItem.Type,
+                Classes = string.Join(", ", eventItem.ClassParallels.Select(p => $"{p} класс")),
+                Status = eventItem.Status
+            };
+
+            <!-- Первая строка события -->
+            <tr class="event-row">
+                <td class="text-center align-middle event-number-cell" rowspan="4">
+                    <div class="event-day">@eventItem.Date.Day</div>
+                    <div class="event-month">@eventItem.GetFormattedDate().Split(' ')[1]</div>
+                </td>
+                <td class="text-start" colspan="3">@eventItem.Title</td>
+                <td class="text-end align-middle">@eventItem.Status</td>
+            </tr>
+
+            <!-- Вторая строка события -->
+            <tr>
+                <td class="text-start" colspan="4">@eventItem.Type</td>
+            </tr>
+            <tr>
+                <td colspan="4" style="height: 10px;"></td>
+            </tr>
+            <!-- Третья строка события (классы) -->
+            <tr class="event-classes-row" data-event='@Json.Serialize(eventData)' data-group-end>
+                @{
+                    int classCount = Math.Min(eventItem.ClassParallels.Count, 4);
+                    for (int i = 0; i < classCount; i++)
+                    {
+                        var parallel = eventItem.ClassParallels[i];
+                        <td class="text-start class-cell">
+                            <span class="full-text" style="cursor: pointer;">@eventItem.FormatClassParallel(parallel)</span>
+                            <span class="short-text" style="cursor: pointer;">@eventItem.FormatShortClassParallel(parallel)</span>
+                        </td>
+                    }
+                    
+                    for (int i = classCount; i < 4; i++)
+                    {
+                        <td class="text-start"></td>
+                    }
+                }
+            </tr>
+            <!-- Пустая строка-разделитель (только между мероприятиями) -->
+            @if (eventItem != Model.Last())
+            {
+                <tr class="group-spacer">
+                    <td colspan="5" style="height: 20px;"></td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.event-classes-row').forEach(row => {
+            row.addEventListener('click', function() {
+                const eventData = JSON.parse(this.getAttribute('data-event'));
+                
+                // Заполнение модального окна
+                const modal = new bootstrap.Modal(document.getElementById('eventModal'));
+                modal.show();
+            });
+        });
+    });
+</script>

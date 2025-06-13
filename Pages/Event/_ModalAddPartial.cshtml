@@ -1,0 +1,129 @@
+﻿<div class="modal fade" id="addEventModal" tabindex="-1" aria-labelledby="eventModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <div class="center-content">
+                    <h5 class="rating-title" id="eventModalLabel">Создание мероприятия</h5>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+
+<form id="eventForm" novalidate class="needs-validation">
+    <!-- Секция "Наименование" -->
+    <div class="form-group mb-3">
+        <label class="control-label">Название мероприятия *</label>
+        <input type="text" class="form-control" id="eventName" name="Name" placeholder="Название мероприятия" required />
+        <div class="invalid-feedback">Пожалуйста, укажите название мероприятия</div>
+    </div>
+                    <div class="form-group">
+                        <label class="control-label">Дата *</label>
+                        <input class="form-control" type="datetime-local"
+                               id="eventDate" name="Date" required
+                               step="1" /> <!-- Добавляем секунды -->
+                        <div class="invalid-feedback">Пожалуйста, укажите дату мероприятия</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="control-label">Тип *</label>
+                        <select class="form-control" id="eventType" name="Type" asp-items="Html.GetEnumSelectList<Read_Win.Models.EventType>()" required>
+                            <option value="">-- Выберите тип --</option>
+                        </select>
+                        <div class="invalid-feedback">Пожалуйста, укажите тип мероприятия</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="control-label">Комментарий</label>
+                        <textarea class="form-control" id="eventDescription" name="Description"></textarea>
+                    </div>
+                    <!-- Секция "Класс" -->
+                    <div class="form-group">
+                        <label class="control-label">Класс *</label>
+                        <div class="d-flex flex-wrap gap-2" id="classCheckboxes">
+                            @for (int i = 1; i <= 4; i++)
+                            {
+                                <div class="form-check">
+                                    <input class="form-check-input class-checkbox" type="checkbox" id="class@(i)" value="@i">
+                                    <label class="form-check-label" for="class@(i)">@i класс</label>
+                                </div>
+                            }
+                        </div>
+                        <div class="invalid-feedback" id="classError">Пожалуйста, выберите хотя бы один класс</div>
+                    </div>
+
+                    <!-- Таблица для классов и произведений -->
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="worksTable">
+                            <thead>
+                                <tr>
+                                    <th>Класс</th>
+                                    <th>Название произведения *</th>
+                                </tr>
+                            </thead>
+                            <tbody id="workRows">
+                                <!-- Строки будут добавляться динамически -->
+                            </tbody>
+                        </table>
+                    </div>
+                </form>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                <button type="button" class="btn btn-primary" id="saveEventButton">Сохранить</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkboxes = document.querySelectorAll('.class-checkbox');
+        const workRows = document.getElementById('workRows');
+        const classCheckboxes = document.getElementById('classCheckboxes');
+
+        // Функция для обновления строк с произведениями
+        function updateWorkRows() {
+            workRows.innerHTML = '';
+            let hasChecked = false;
+
+            checkboxes.forEach(checkbox => {
+                if (checkbox.checked) {
+                    hasChecked = true;
+                    const row = document.createElement('tr');
+                    row.dataset.class = checkbox.value;
+                    row.innerHTML = `
+                        <td>${checkbox.value} класс</td>
+                        <td>
+                            <input type="text" class="form-control book-name"
+                                   data-class="${checkbox.value}"
+                                   name="Classes[${checkbox.value}].BookName"
+                                   placeholder="Введите название произведения" required>
+                            <div class="invalid-feedback">Пожалуйста, укажите название произведения</div>
+                        </td>
+                    `;
+                    workRows.appendChild(row);
+
+                    // Добавляем обработчик для валидации при вводе
+            const input = row.querySelector('.book-name');
+            input.addEventListener('input', function() {
+                this.classList.toggle('is-invalid', !this.value.trim());
+            });
+                }
+            });
+
+            // Показываем/скрываем ошибку выбора классов
+            classCheckboxes.classList.toggle('is-invalid', !hasChecked);
+            document.getElementById('classError').style.display = hasChecked ? 'none' : 'block';
+        }
+
+        // Обработчики изменения состояния чекбоксов
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', updateWorkRows);
+        });
+
+        // Инициализация строк при загрузке
+        updateWorkRows();
+       });
+</script>

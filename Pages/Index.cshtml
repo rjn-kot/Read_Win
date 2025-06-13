@@ -1,0 +1,138 @@
+﻿@page
+@model Read_Win.Pages.IndexModel
+@{
+    ViewData["Title"] = "Добавить мероприятие";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<form method="post">
+    <div class="form-group">
+        <label asp-for="EventInput.Name" class="control-label"></label>
+        <input asp-for="EventInput.Name" class="form-control" />
+        <span asp-validation-for="EventInput.Name" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="EventInput.Date" class="control-label"></label>
+        <input asp-for="EventInput.Date" class="form-control" type="datetime-local" />
+        <span asp-validation-for="EventInput.Date" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="EventInput.Description" class="control-label"></label>
+        <textarea asp-for="EventInput.Description" class="form-control"></textarea>
+        <span asp-validation-for="EventInput.Description" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="EventInput.Type" class="control-label"></label>
+        <select asp-for="EventInput.Type" class="form-control"
+                asp-items="Html.GetEnumSelectList<Read_Win.Models.EventType>()">
+            <option value="">-- Выберите тип --</option>
+        </select>
+        <span asp-validation-for="EventInput.Type" class="text-danger"></span>
+    </div>
+
+    <h4>Параллели классов</h4>
+    <div id="parallels-container">
+        @for (var i = 0; i < Model.EventInput.Parallels.Count; i++)
+        {
+            <div class="parallel-group row mb-3">
+                <div class="col-md-3">
+                    <label class="control-label">Параллель</label>
+                    <select asp-for="EventInput.Parallels[i].ClassParallel" class="form-control">
+                        <option value="1">1 класс</option>
+                        <option value="2">2 класс</option>
+                        <option value="3">3 класс</option>
+                        <option value="4">4 класс</option>
+                    </select>
+                    <span asp-validation-for="EventInput.Parallels[i].ClassParallel" class="text-danger"></span>
+                </div>
+                <div class="col-md-7">
+                    <label class="control-label">Название книги</label>
+                    <input asp-for="EventInput.Parallels[i].BookName" class="form-control" />
+                    <span asp-validation-for="EventInput.Parallels[i].BookName" class="text-danger"></span>
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-danger mt-4" onclick="removeParallel(this)">Удалить</button>
+                </div>
+            </div>
+        }
+    </div>
+
+    <button type="button" id="add-parallel" class="btn btn-secondary mb-3">Добавить параллель</button>
+
+    <div class="form-group">
+        <input type="submit" value="Создать" class="btn btn-primary" />
+        <a asp-page="./Index" class="btn btn-secondary">Отмена</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        // Добавление новой параллели
+        document.getElementById('add-parallel').addEventListener('click', function() {
+            const container = document.getElementById('parallels-container');
+            const index = container.children.length;
+
+            const template = `
+                <div class="parallel-group row mb-3">
+                    <div class="col-md-3">
+                        <label class="control-label">Параллель</label>
+                        <select name="EventInput.Parallels[${index}].ClassParallel" class="form-control">
+                            <option value="1">1 класс</option>
+                            <option value="2">2 класс</option>
+                            <option value="3">3 класс</option>
+                            <option value="4">4 класс</option>
+                        </select>
+                        <span class="text-danger field-validation-valid"
+                            data-valmsg-for="EventInput.Parallels[${index}].ClassParallel"
+                            data-valmsg-replace="true"></span>
+                    </div>
+                    <div class="col-md-7">
+                        <label class="control-label">Название книги</label>
+                        <input name="EventInput.Parallels[${index}].BookName" class="form-control" />
+                        <span class="text-danger field-validation-valid"
+                            data-valmsg-for="EventInput.Parallels[${index}].BookName"
+                            data-valmsg-replace="true"></span>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="button" class="btn btn-danger mt-4" onclick="removeParallel(this)">Удалить</button>
+                    </div>
+                </div>
+            `;
+
+            container.insertAdjacentHTML('beforeend', template);
+        });
+
+        // Удаление параллели
+        function removeParallel(button) {
+            const group = button.closest('.parallel-group');
+            group.remove();
+
+            // Перенумеруем оставшиеся поля для правильной привязки модели
+            const container = document.getElementById('parallels-container');
+            const groups = container.querySelectorAll('.parallel-group');
+
+            groups.forEach((group, index) => {
+                group.querySelector('select').name = `EventInput.Parallels[${index}].ClassParallel`;
+                group.querySelector('input').name = `EventInput.Parallels[${index}].BookName`;
+
+                // Обновляем валидационные сообщения
+                const classValidation = group.querySelector('span[data-valmsg-for*="ClassParallel"]');
+                const bookValidation = group.querySelector('span[data-valmsg-for*="BookName"]');
+
+                if (classValidation) {
+                    classValidation.setAttribute('data-valmsg-for', `EventInput.Parallels[${index}].ClassParallel`);
+                }
+
+                if (bookValidation) {
+                    bookValidation.setAttribute('data-valmsg-for', `EventInput.Parallels[${index}].BookName`);
+                }
+            });
+        }
+    </script>
+}

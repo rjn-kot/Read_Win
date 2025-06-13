@@ -1,0 +1,153 @@
+﻿@page
+@model Read_Win.Pages.Top.TopModel
+@{
+    ViewData["Title"] = "Рейтинг";
+    ViewData["Subtitle"] = "Результаты\u2007";
+    ViewData["ActivePage"] = "Top";
+}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"]</title>
+</head>
+<body>
+    <div class="d-flex align-items-center">
+        <span class="Top_Top fst-normal">@ViewData["Subtitle"]</span>
+        @{
+            var defaultOpt = ViewData["DefaultOption"] as string ?? Model.SchoolYears.FirstOrDefault()?.Period;
+        }
+        <div class="dropdown d-inline">
+            <button class="btn p-0 border-0 bg-transparent dropdown-toggle"
+                    type="button"
+                    id="textDropdown"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false"
+                    style="font: inherit; color: inherit; box-shadow: none;">
+                <span id="selectedOption">@defaultOpt</span>
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="textDropdown">
+                @foreach (var year in Model.SchoolYears)
+                {
+                    <li>
+                        <a class="dropdown-item @(year.Period == defaultOpt ? "active" : "")"
+                           href="#"
+                           data-value="@year.Period">
+                            @year.Period
+                        </a>
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
+    <div class="main-container">
+        <!-- Левая панель с кнопками классов -->
+        <div class="left-sidebar d-flex flex-column justify-content-center">
+            <button class="btn btn-outline-primary class-button mb-2 active" data-class="1">1 класс</button>
+            <button class="btn btn-outline-primary class-button mb-2" data-class="2">2 класс</button>
+            <button class="btn btn-outline-primary class-button mb-2" data-class="3">3 класс</button>
+            <button class="btn btn-outline-primary class-button" data-class="4">4 класс</button>
+        </div>
+
+        <!-- Центральный контейнер с рейтингом -->
+        <div class="center-content">
+            <h1 class="rating-title">@ViewData["Title"] <span id="currentPeriod">@defaultOpt</span></h1>
+            <div class="btn-container">
+                <div class="btn-color-mode-switch">
+                    <input type="checkbox" id="student_class_switch" name="student_class_switch">
+                    <label for="student_class_switch" class="btn-color-mode-switch-inner"
+                           data-on="Ученики" data-off="Классы"></label>
+                </div>
+            </div>
+            <div class="rating-container">
+                <div id="ratingContent">
+                    <!-- Здесь будет загружаться таблица рейтинга -->
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Правая панель для новостей -->
+        <div class="right-sidebar">
+            <h5>Новости</h5>
+            <div id="newsContent">
+                <p>Новостей пока нет и не будет!!! Тут работают только кнопки. Вся эта страница ради кнопок.</p>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Переменные состояния
+            let currentClassNumber = 1;
+            let currentPeriod = document.getElementById('selectedOption').textContent;
+            let isStudentView = document.getElementById('student_class_switch').checked;
+
+            // Функция загрузки данных
+            async function loadRatingData() {
+                const container = document.getElementById('ratingContent');
+                container.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>';
+
+                const handler = isStudentView ? 'RatingStudData' : 'RatingData';
+                const url = `/Top/Top?handler=${handler}&period=${encodeURIComponent(currentPeriod)}&classNumber=${currentClassNumber}`;
+
+                try {
+                    const response = await fetch(url);
+                    if (!response.ok) throw new Error('Ошибка загрузки данных');
+                    container.innerHTML = await response.text();
+                } catch (error) {
+                    console.error('Ошибка:', error);
+                    container.innerHTML = `<div class="alert alert-danger">${error.message}</div>`;
+                }
+            }
+
+            // Установка активной кнопки класса
+            function setActiveClassButton(classNum) {
+                document.querySelectorAll('.class-button').forEach(btn => {
+                    btn.classList.toggle('active', parseInt(btn.dataset.class) === classNum);
+                });
+            }
+
+            // Инициализация
+            setActiveClassButton(currentClassNumber);
+            loadRatingData();
+
+            // Обработчики событий
+            // 1. Обработчик кнопок классов
+            document.querySelectorAll('.class-button').forEach(button => {
+                button.addEventListener('click', function() {
+                    currentClassNumber = parseInt(this.dataset.class);
+                    setActiveClassButton(currentClassNumber);
+                    loadRatingData();
+                });
+            });
+
+            // 2. Обработчик выбора периода
+            document.querySelectorAll('.dropdown-item').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const selectedPeriod = this.textContent.trim();
+
+                    // Обновляем UI
+                    document.querySelectorAll('.dropdown-item').forEach(el => el.classList.remove('active'));
+                    this.classList.add('active');
+                    document.getElementById('selectedOption').textContent = selectedPeriod;
+                    document.getElementById('currentPeriod').textContent = selectedPeriod;
+
+                    // Обновляем период и загружаем данные
+                    currentPeriod = selectedPeriod;
+                    loadRatingData();
+                });
+            });
+
+            // 3. Обработчик переключения между учениками/классами
+            document.getElementById('student_class_switch').addEventListener('change', function() {
+                isStudentView = this.checked;
+                loadRatingData();
+            });
+        });
+    </script>
+</body>
+</html>
