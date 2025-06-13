@@ -1,26 +1,33 @@
-﻿version: '3.8'
+version: '3.8'
 
 services:
   readwin-app:
     build: .
     ports:
-      - "8080:8080"
-      - "8081:8081"
+      - "8080:8080"  # Веб-интерфейс приложения
+      - "8081:8081"  # Дополнительный порт (если нужен)
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Server=mysql-db;Database=readwin;User=root;Password=password;
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENV}  # Режим работы (Development/Production)
+      - ConnectionStrings__DefaultConnection=Server=mysql-db;Database=readwin;User=root;Password=${MYSQL_ROOT_PASSWORD};
     depends_on:
       - mysql-db
+    restart: unless-stopped  # Автоперезапуск при падении
 
   mysql-db:
     image: mysql:8.0
     environment:
-      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}  # Секрет из stack.env
       - MYSQL_DATABASE=readwin
     ports:
-      - "3307:3306"
+      - "3307:3306"  # Внешний доступ к MySQL (если требуется)
     volumes:
-      - mysql_data:/var/lib/mysql
+      - mysql_data:/var/lib/mysql  # Сохранение данных БД
+    restart: unless-stopped
+    healthcheck:  # Проверка готовности БД
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
 
 volumes:
   mysql_data:
